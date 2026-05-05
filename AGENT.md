@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 模拟面试官追问，帮助用户准备深度回答
 - 对逐字稿和回答内容提供优化建议
 - 围绕八股文知识点与用户交互讨论，帮助理解和记忆
+- 严厉模式，尽可能角度刁钻
 
 ## 目录结构
 
