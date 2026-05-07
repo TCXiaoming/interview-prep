@@ -4,7 +4,6 @@ import { Controller, useFormContext as useHookFormContext } from 'react-hook-for
 import type { Control } from 'react-hook-form';
 import type { FieldConfig } from '../types/form';
 import { useFormContext } from '../context/FormContext';
-import { useLinkage } from '../hooks/useLinkage';
 
 interface FieldRendererProps {
   field: FieldConfig;
@@ -19,14 +18,6 @@ interface FieldRendererProps {
  */
 export const FieldRenderer = React.memo(function FieldRenderer({ field, control }: FieldRendererProps) {
   const { linkageState } = useFormContext();
-  const { watch, setValue } = useHookFormContext();
-
-  // 联动逻辑
-  useLinkage({
-    field,
-    watchSource: (name) => watch(name),
-    setFieldValue: (name, val) => setValue(name, val),
-  });
 
   // 联动：可见性
   const isVisible = linkageState.visibility[field.id] ?? true;
@@ -35,44 +26,56 @@ export const FieldRenderer = React.memo(function FieldRenderer({ field, control 
 
   if (!isVisible) return null;
 
-  const renderField = () => {
-    switch (field.type) {
-      case 'input':
-        return <Input placeholder={field.placeholder} />;
-      case 'number':
-        return <InputNumber style={{ width: '100%' }} placeholder={field.placeholder} />;
-      case 'select':
-        return (
-          <Select placeholder={field.placeholder}>
-            {field.options?.map((opt) => (
-              <Select.Option key={opt.value} value={opt.value}>
-                {opt.label}
-              </Select.Option>
-            ))}
-          </Select>
-        );
-      case 'date':
-        return <DatePicker style={{ width: '100%' }} />;
-      default:
-        return <Input />;
-    }
-  };
-
   return (
-    <Form.Item
-      label={field.label}
-      required={isRequired}
-      style={{ marginBottom: 12 }}
-    >
+    <Form.Item label={field.label} required={isRequired} style={{ marginBottom: 12 }}>
       <Controller
         name={field.id}
         control={control}
         rules={{ required: isRequired }}
-        render={({ field: controllerField }) => (
-          <div {...controllerField}>
-            {renderField()}
-          </div>
-        )}
+        render={({ field: { onChange, onBlur, value, ref } }) => {
+          switch (field.type) {
+            case 'input':
+              return (
+                <Input
+                  ref={ref}
+                  value={value as string}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  placeholder={field.placeholder}
+                />
+              );
+            case 'number':
+              return (
+                <InputNumber
+                  ref={ref}
+                  value={value as number}
+                  onChange={(v) => onChange(v)}
+                  onBlur={onBlur}
+                  style={{ width: '100%' }}
+                  placeholder={field.placeholder}
+                />
+              );
+            case 'select':
+              return (
+                <Select
+                  ref={ref}
+                  value={value as string}
+                  onChange={onChange}
+                  placeholder={field.placeholder}
+                >
+                  {field.options?.map((opt) => (
+                    <Select.Option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </Select.Option>
+                  ))}
+                </Select>
+              );
+            case 'date':
+              return <DatePicker style={{ width: '100%' }} value={value as any} onChange={(v) => onChange(v)} />;
+            default:
+              return <Input ref={ref} value={value as string} onChange={onChange} onBlur={onBlur} />;
+          }
+        }}
       />
     </Form.Item>
   );
